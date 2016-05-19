@@ -17,31 +17,30 @@ module Codebreaker
       it "saves secret code with numbers from 1 to 6" do
         expect(game.instance_variable_get(:@secret_code)).to match(/[1-6]+/)
       end
-      it "init variables" do
-        expect(game.cnt).to eq(0)
-        expect(game.date).to be_a(DateTime)
-        expect(game.name).to eq('anonimus')
-      end
     end
 
     describe "#attempt" do
+      before do 
+        game.start
+        game.instance_variable_set(:@secret_code, "1623")
+      end
+      it "input is not valid" do
+        expect(game.attempt("1sd ")).to eq('input not valid')
+      end
       context "checking the result" do
-        before do 
-          game.start
-          game.instance_variable_set(:@secret_code, "1623")
-        end
+        
         context "guessed" do
           it "one number" do 
-            expect(game.attempt("1442")).to eq('+')
+            expect(game.attempt("1445")).to eq('+')
           end
           it "two numbers" do 
             expect(game.attempt("1453")).to eq('++')
           end
           it "three numbers" do 
-            expect(game.attempt("1643")).to eq('+++')
+            expect(game.attempt("1423")).to eq('+++')
           end
           it "all numbers" do 
-            expect(game.attempt("1623")).to eq('You win!!!')
+            expect(game.attempt("1623")).to eq(:win)
           end
         end
         context "is not in its place" do
@@ -62,46 +61,67 @@ module Codebreaker
           end
         end
       end
-      it "then used three attempts, counter increse by 3" do
-        game.start
-        expect { 3.times { game.attempt('7286') } }.to change{game.cnt}.from(0).to(3)
-      end
 
-      context "return 'game over' after used everything attempts" do
+      context "return :lose after used everything attempts" do
         before do 
           game.start
           game.instance_variable_set(:@secret_code, "1623")
         end
         it "easy mode - 20 attemps" do
           game.mode = :easy
-          expect(game.attempt("1928")).to receive('game over').exactly(20).times
+          19.times{ game.attempt("1928") }
+          expect(game.attempt("1928")).to eq(:lose)
         end
         it "normal mode - 10 attemps" do
           game.mode = :normal
-          expect(10.times{ game.attempt("1928")}).to eq('game over')
+          9.times{ game.attempt("1928") }
+          expect(game.attempt("1928")).to eq(:lose)
         end
         it "hard mode - 5 attemps" do
           game.mode = :hard
-          expect(5.times{ game.attempt("1928")}).to eq('game over')
+          4.times{game.attempt("1928") }
+          expect(game.attempt("1928")).to eq(:lose)
         end
       end
     end
-    describe "plays again" do
-      it "mock"
-      #if end game, then have to offer new game
-    end
+    
     describe "request hint" do
+      before do 
+          game.start
+      end
       it "length eq 1" do
         expect(game.hint.size).to eq(1)
       end
-      it "contains one number from a secret code" do
+      it "contains one number of secret code" do
         expect(game.instance_variable_get(:@secret_code)).to include(game.hint)
       end
     end
-    describe "save score" do
-      it "save score after end game" 
+    
+    describe "#play_again" do
+      before do 
+          game.start
+          game.instance_variable_set(:@secret_code, "1623")
+      end
+    
+      it "will have created the new game if game win" do
+        game.attempt("1623")
+        expect { game.play_again }.to change{ game.state }.from(:win).to(:new_game)
+        expect(game.cnt).to eq(0)
+      end
+      
+      it "will have created the new game if game lose" do
+        20.times{ game.attempt("1928") }
+        expect { game.play_again }.to change{ game.state }.from(:lose).to(:new_game)
+        expect(game.cnt).to eq(0)
+      end
+      #if end game, then have to offer new game
     end
-
+    
+    describe "save score" do
+      it "save score after end game" do
+      
+      end
+    end
 
   end
 end
