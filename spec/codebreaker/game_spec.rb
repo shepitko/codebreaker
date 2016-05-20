@@ -1,5 +1,7 @@
 require 'spec_helper'
 require 'date'
+require 'yaml'
+
 module Codebreaker
   describe Game do
     let(:game) { Game.new }
@@ -85,7 +87,7 @@ module Codebreaker
       end
     end
     
-    describe "request hint" do
+    describe "#hint" do
       before do 
           game.start
       end
@@ -118,8 +120,19 @@ module Codebreaker
     end
     
     describe "save score" do
-      it "save score after end game" do
-      
+      it "after end game" do
+        @buffer = StringIO.new()
+        @filename = "results.yaml"
+        @content = Hash.new
+        @content['name'] = "Test User"
+        @content['cnt'] = 4
+        @content['hint'] = true
+        @content['date'] = DateTime.new
+        allow(File).to receive(:open).with(@filename,'w').and_yield( @buffer )
+
+        File.open(@filename, 'w') {|f| f.write(@content)}
+
+        expect(@buffer.string).to eq(@content.to_s)
       end
     end
 
