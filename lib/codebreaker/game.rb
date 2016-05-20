@@ -4,6 +4,7 @@ module Codebreaker
 
     attr_accessor :date, :name
     attr_reader :cnt, :state
+    
     def initialize
       @secret_code = ""
       @modes = {easy: 20, normal: 10, hard: 5 }
@@ -57,6 +58,14 @@ module Codebreaker
     
     def play_again
       start
+    end
+    
+    def save_score(name)
+      YAML::load_file('/tmp/test.yml')
+      @content['name'] = "Test User"
+      @content['cnt'] = 4
+      @content['hint'] = true
+      @content['date'] = DateTime.new
     end
     
   end
