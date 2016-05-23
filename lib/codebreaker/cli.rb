@@ -1,4 +1,3 @@
-module Codebreaker
-  class Cli
-  end
+class Codebreaker::Cli
+  
 end
