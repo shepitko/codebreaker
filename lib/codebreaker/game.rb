@@ -15,7 +15,7 @@ class Codebreaker::Game
     #default values
     @state = :new_game
     @cnt = 0
-    @mode = @modes[:easy] 
+    @mode = @modes[:normal] 
   end
 
   def attempt(num)
