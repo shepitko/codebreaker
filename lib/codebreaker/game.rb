@@ -1,71 +1,74 @@
 require 'date'
+require 'yaml'
+module Codebreaker
+  class Game
 
-class Codebreaker::Game
+    attr_accessor :date, :name
+    attr_reader :cnt, :state
 
-  attr_accessor :date, :name
-  attr_reader :cnt, :state
-  
-  def initialize
-    @secret_code = ""
-    @modes = {easy: 20, normal: 10, hard: 5 }
-  end
-
-  def start
-    4.times{ @secret_code += rand(1..6).to_s }
-    #default values
-    @state = :new_game
-    @cnt = 0
-    @mode = @modes[:normal] 
-  end
-
-  def attempt(num)
-    return "input not valid" unless num !~ /\D/
-      
-    @cnt += 1
+    MODES = {easy: 20, normal: 10, hard: 5 }
     
-    case
-    when num == @secret_code
-      @state = :win
-    when (@cnt >= @mode) && (@secret_code != num) 
-      @state = :lose
-    else 
-      check(num)
+    def initialize
+      @secret_code = ""
     end
-  end
 
-  def mode=(sym)
-    @mode = @modes[sym]
-  end
-  
-  def check(num)
-    result = ""
-    code = @secret_code.split("").map(&:to_i)
-    num = num.split("").map(&:to_i)
-    num.each_with_index do |v,k| 
-      if v == code[k]
-        result += "+"
-        code[k] = nil
-        num[k] = nil
+    def start
+      @secret_code = (1..4).map{ rand(1..6) }.join
+      @state = :new_game
+      @cnt = 0
+      @mode = MODES[:normal] 
+    end
+
+    def attempt(num)
+      return "input not valid" unless num !~ /\D/
+      @cnt += 1
+      
+      case
+      when num == @secret_code
+        @state = :win
+      when (@cnt >= @mode) && (@secret_code != num) 
+        @state = :lose
+      else 
+        check(num)
       end
     end
-    code.compact.each{|v| result += "-" if num.include?(v)}
-    result
+
+    def mode=(sym)
+      @mode = MODES[sym]
+    end
+    
+    def check(num)
+      code = @secret_code.chars
+      num = num.chars
+      mark = code.zip(num).delete_if{|v| v[0] == v[1]} 
+      plus = '+' * (4 - mark.length)
+      minus = '-' * (mark.transpose[0] & mark.transpose[1]).length
+      result = plus << minus
+    end
+    
+    def hint
+      @hint = true
+      @secret_code.split("").sample
+    end
+    
+    def play_again
+      start
+    end
+    
+    def save_score(username = 'undefined')
+      scores = YAML::load_file('score.yml')
+      content = { username:username, cnt:@cnt , hint:@hint || false, date:DateTime.new}
+      if scores
+        scores[:scores] << content
+      else
+        scores = { scores: [content] }
+      end
+      File.open('score.yml', 'w') { |f| f.write scores.to_yaml }
+    end
+
+    def show_score
+      YAML::load_file('score.yml')
+    end
+    
   end
-  
-  def hint
-    @secret_code.split("").sample
-  end
-  
-  def play_again
-    start
-  end
-  
-  def save_score(name)
-    YAML::load_file('/tmp/test.yml')
-    @content['name'] = "Test User"
-    @content['cnt'] = 4
-    @content['hint'] = true
-    @content['date'] = DateTime.new
-  end
-  
 end

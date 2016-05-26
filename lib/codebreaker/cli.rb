@@ -1,5 +1,3 @@
-
-
 module Codebreaker
 require_relative 'game'
   class Cli
@@ -29,12 +27,12 @@ require_relative 'game'
     end
     
     def use_hint
-      print "Do yo want use hint?(y/n)"
+      print "Do you want use hint?(y/n)"
       answer = gets.chomp
-      @game.hint+"\n" if answer[0].downcase == 'y'
+      print "Hint:"+@game.hint+"\n" if answer[0].downcase == 'y'
     end
     
-    def attempt
+     def attempt
       print "Enter guess:"
       guess = gets.chomp
       @game.attempt(guess)
@@ -44,38 +42,27 @@ require_relative 'game'
       case guess 
       when :win
         print "You win!"
-        save_score
       when :lose  
         print "LOSER!!!\n"
-        try_again
       else 
         print guess+"\n"
-        attempt
       end
     end
-    
+
     def save_score
       print "Prompt your name:" 
       name = gets.chomp
       @game.save_score(name)
-      try_again
     end
     
     def try_again
       print "Do You Want To Play More?(y/n)"
       answer = gets.chomp
       if answer[0].downcase == 'y' 
-        initialize
-        choice_mode
-        attempt
+        @game.play_again
       else
         print "Goodbye!\n"
       end
     end
   end
 end
-
-#cli = Codebreaker::Cli.new
-#cli.use_hint
-#cli.choice_mode
-#check_result(cli.attempt)
