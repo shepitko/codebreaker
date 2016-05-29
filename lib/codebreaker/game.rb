@@ -3,8 +3,7 @@ require 'yaml'
 module Codebreaker
   class Game
 
-    attr_accessor :date, :name
-    attr_reader :cnt, :state
+    attr_reader :cnt, :state, :mode
 
     MODES = {easy: 20, normal: 10, hard: 5 }
     
@@ -57,7 +56,7 @@ module Codebreaker
     
     def save_score(username = 'undefined')
       scores = YAML::load_file('score.yml')
-      content = { username:username, cnt:@cnt , hint:@hint || false, date:DateTime.new}
+      content = { username:username, cnt:@cnt , hint:@hint || false, date:Date.now, score:score}
       if scores
         scores[:scores] << content
       else
@@ -68,6 +67,11 @@ module Codebreaker
 
     def show_score
       YAML::load_file('score.yml')
+    end
+    
+    def score
+      hint = @hint ? 1 : 0
+      (20 - @cnt - hint) * 100
     end
     
   end
