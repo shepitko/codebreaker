@@ -56,7 +56,7 @@ module Codebreaker
     
     def save_score(username = 'undefined')
       scores = YAML::load_file('score.yml')
-      content = { username:username, cnt:@cnt , hint:@hint || false, date:Date.now, score:score}
+      content = { username:username, cnt:@cnt , hint:@hint || false, date:Time.now, score:score}
       if scores
         scores[:scores] << content
       else
