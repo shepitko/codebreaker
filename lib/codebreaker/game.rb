@@ -37,24 +37,25 @@ module Codebreaker
       @mode = MODES[sym]
     end
     
-    def check(num)
+    def check(num) 
       code = @secret_code.chars
       num = num.chars
       mark = code.zip(num).delete_if{|v| v[0] == v[1]} 
+      arr = mark.transpose
+      
 
       plus = '+' * (4 - mark.length)
 
-      minus = ""
-      one = mark.transpose[0].sort!
-      two = mark.transpose[1].sort!
-      (0..mark.length-1).each{ |index| minus += "-" if one[index] == two[index] }
+      res = ""
+      (0..mark.length-1).each{ |index| res = arr[0].delete_if{ |val| arr[1][index] == val } }
+      minus = "-" * (mark.length - res.length)
       
       result = plus << minus
     end
     
     def hint
       @hint = true
-      @secret_code.split("").sample
+      @secret_code.chars.sample
     end
     
     def play_again
