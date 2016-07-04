@@ -1,103 +1,103 @@
 require 'spec_helper'
- 
+require 'date'
+require 'yaml'
+
 module Codebreaker
   describe Game do
-    let(:game) { Game.new }
-    
+
+    before do 
+      subject.start
+      subject.instance_variable_set(:@secret_code, "1623")
+    end
+
     describe "#start" do
-      before do
-        game.start
-      end
       it "saves secret code" do
-        expect(game.instance_variable_get(:@secret_code)).not_to be_empty
+        expect(subject.instance_variable_get(:@secret_code)).not_to be_empty
       end
       it "saves 4 numbers secret code" do
-        expect(game.instance_variable_get(:@secret_code).size).to eq(4)
+        expect(subject.instance_variable_get(:@secret_code).size).to eq(4)
       end
       it "saves secret code with numbers from 1 to 6" do
-        expect(game.instance_variable_get(:@secret_code)).to match(/[1-6]+/)
-      end
-      it "checking instance variables" do
-        expect(game.cnt).to eq(0)
-        expect(game.hint).to eq(0)
-        expect(game.date).to eq(Date.new)
-        expect(game.name).to eq('anonimus')
+        expect(subject.instance_variable_get(:@secret_code)).to match(/[1-6]+/)
       end
     end
 
     describe "#attempt" do
-      context "checking the result" do
-        before do 
-          game.instance_variable_set(:@secret_code, "1623")
+      it "input is not valid" do
+        expect(subject.attempt("1sd ")).to eq('input not valid')
+      end
+
+      context "all options return value" do
+
+        RSpec.shared_examples "checking the result" do |combinations|
+          combinations.each do |arr|
+            it "#{arr[0]}" do 
+              expect(subject.attempt(arr[1])).to eq(arr[2])
+            end
+          end
         end
+
         context "guessed" do
-          it "one number" do 
-            expect(game.attemp("1442")).to eq('+')
-          end
-          it "two numbers" do 
-            expect(game.attemp("1453")).to eq('++')
-          end
-          it "three numbers" do 
-            expect(game.attemp("1643")).to eq('++++')
-          end
-          it "all numbers" do 
-            expect(game.attemp("1623")).to eq('You win!!!')
-          end
+          include_examples "checking the result", \
+          [['one number', '1445', '+'],['two numbers', '1453', '++'],['three numbers', '1423', '+++'],['all numbers', '1623', :win]]
         end
-        context "is not in its place" do
-          it "one number" do 
-            expect(game.attemp("5141")).to eq('-')
-          end
 
-          it "two numbers" do 
-            expect(game.attemp("5131")).to eq('--')
-          end
+        context "is not on its place" do
+          include_examples "checking the result", \
+          [['one number', '5141', '-'],['two numbers', '5131', '--'],['three numbers', '5236', '---'],['four numbers', '2361', '----']]
+        end
 
-          it "three numbers" do 
-            expect(game.attemp("5236")).to eq('---')
-          end
+        context "mixed result" do
+          include_examples "checking the result", \
+          [['2 guessed and 2 almost', '1632', '++--'],['1 guessed and 1 almost', '1244', '+-'],
+          ['1 guessed and 2 almost', '6233', '+--'],['1 guessed and 3 almost', '1362', '+---']]
+        end
+      end
 
-          it "four numbers" do 
-            expect(game.attemp("2361")).to eq('----')
+      context "return :lose after used all attempts" do
+        [[:easy, 20], [:normal, 10], [:hard, 5]].each do |arr|
+          it "#{arr[0]} mode - #{arr[1]} attemps" do
+            subject.mode = arr[0]
+            (arr[1] - 1).times{ subject.attempt("1928") }
+            expect(subject.attempt("1928")).to eq(:lose)
           end
         end
       end
-      it "then used three attempts, counter increse by 3" do
-        game.start
-        expect { 3.times { game.attempt('7286') } }.to change(game.cnt, 0).from(0).to(2)
-      end
 
-      context "return 'game over' after used everything attempts" do
-        it "easy mode - 20 attemps" do
-          game.mode(:easy)
-          expect(20.times{ game.attemp("1928")}).to eq('game over')
-        end
-        it "normal mode - 10 attemps" do
-          game.mode(:normal)
-          expect(10.times{ game.attemp("1928")}).to eq('game over')
-        end
-        it "hard mode - 5 attemps" do
-          game.mode(:hard)
-          expect(5.times{ game.attemp("1928")}).to eq('game over')
-        end
-      end
     end
-    describe "plays again" do
-      it "mock"
-      #if end game, then have to offer new game
-    end
-    describe "request hint" do
+    
+    describe "#hint" do
       it "length eq 1" do
-        expect(game.hint.size).to eq(1)
+        expect(subject.hint.size).to eq(1)
       end
-      it "contains one number from a secret code" do
-        expect(game.instance_variable_get(:@secret_code)).to include(game.hint)
+      it "contains one number of secret code" do
+        expect(subject.instance_variable_get(:@secret_code)).to include(subject.hint)
       end
     end
+    
+    describe "#play_again" do
+      it "will have created the new game if game win" do
+        subject.attempt("1623")
+        expect { subject.play_again }.to change{ subject.state }.from(:win).to(:new_game)
+        expect(subject.cnt).to eq(0)
+      end
+      it "will have created the new game if game lose" do
+        20.times{ subject.attempt("1928") }
+        expect { subject.play_again }.to change{ subject.state }.from(:lose).to(:new_game)
+        expect(subject.cnt).to eq(0)
+      end
+    end
+    
     describe "save score" do
-      it "save score after end game" 
+      it "after end game" do
+        @buffer = StringIO.new()
+        @filename = "results.yaml"
+        @content = {name:"Test User", cnt:4, hint:true, date:DateTime.new}
+        allow(File).to receive(:open).with(@filename,'w').and_yield( @buffer )
+
+        File.open(@filename, 'w') {|f| f.write(@content)}
+        expect(@buffer.string).to eq(@content.to_s)
+      end
     end
-
-
   end
 end
